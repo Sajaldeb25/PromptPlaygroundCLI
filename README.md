@@ -137,7 +137,7 @@ Switch models during a session with `/config`.
 
 ## Data Files
 
-All data is stored next to `playground.py`, regardless of your current working directory.
+All data is stored at the **project root** (next to `playground.py`), regardless of your current working directory.
 
 | File | Created when | Purpose |
 |------|--------------|---------|
@@ -175,14 +175,40 @@ All data is stored next to `playground.py`, regardless of your current working d
 
 ```
 PromptPlaygroundCLI/
-├── playground.py       # Main application
-├── requirements.txt    # Python dependencies
-├── .env.example        # API key template (copy to .env)
-├── .gitignore
-├── templates.json      # Auto-created on first /save
-├── logs.json           # Auto-created on first chat
-├── Plan.md             # Implementation plan
-└── README.md
+├── playground.py              # Entry point → PromptPlaygroundApp().run()
+├── prompt_playground/         # Main Python package
+│   ├── config.py              # Paths, MODELS, HELP_TEXT
+│   ├── models.py              # ChatSettings, SessionState
+│   ├── storage/               # TemplateStore, LogStore (JSON I/O)
+│   ├── services/              # ChatService, TemplateService, LogService
+│   └── cli/                   # PromptPlaygroundApp, CommandHandler, SettingsUI
+├── templates.json             # Auto-created on first /save
+├── logs.json                  # Auto-created on first chat
+├── requirements.txt
+├── .env.example
+├── README.md                  # This file — usage guide
+├── ARCHITECTURE.md            # Technical architecture reference
+└── Plan.md                    # Original implementation plan
+```
+
+For class diagrams, dependency rules, and per-file API details, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
+## Architecture (summary)
+
+The app uses a **layered package** design:
+
+| Layer | Location | Role |
+|-------|----------|------|
+| Entry | `playground.py` | Thin launcher |
+| CLI | `prompt_playground/cli/` | REPL, slash commands, terminal I/O |
+| Services | `prompt_playground/services/` | Business logic, Groq adapter |
+| Storage | `prompt_playground/storage/` | JSON file repositories |
+| Config | `prompt_playground/config.py`, `models.py` | Constants and shared state |
+
+```
+playground.py → PromptPlaygroundApp → CommandHandler / ChatService
+                                    → TemplateService / LogService
+                                    → TemplateStore / LogStore → *.json
 ```
 
 ## Troubleshooting
@@ -194,6 +220,7 @@ PromptPlaygroundCLI/
 | `no prompt to save` | Send a chat message before using `/save` |
 | `template not found` | Use `/list` to see available template names |
 | `python: command not found` | Use `python3` instead |
+| `ModuleNotFoundError: prompt_playground` | Run from project root; ensure `playground.py` is present |
 
 ## License
 

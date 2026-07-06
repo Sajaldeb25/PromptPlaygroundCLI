@@ -9,6 +9,8 @@ class ChatSettings:
     temperature: float = 0.7
     max_tokens: int = 500
     system_prompt: str = ""
+    cot_enabled: bool = False
+    stream_enabled: bool = False
 
 
 @dataclass

@@ -17,6 +17,17 @@ MODELS = {
 
 DEFAULT_MODEL = MODELS["llama2"]
 
+DEFAULT_COT_ENABLED = False
+DEFAULT_STREAM_ENABLED = False
+
+COT_SYSTEM_PROMPT = """You must solve problems by first showing your reasoning inside <thinking> tags,
+then provide the final answer inside <answer> tags.
+
+Format:
+<thinking>Your step-by-step reasoning here...</thinking>
+<answer>Your final answer here...</answer>
+"""
+
 HELP_TEXT = """
 Available commands:
   /save <name>    Save last prompt as template

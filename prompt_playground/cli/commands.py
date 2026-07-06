@@ -50,10 +50,12 @@ class CommandHandler:
             print(f"{Fore.GREEN}Goodbye!")
             return True
         else:
+            # if wrong command
             print(f"{Fore.RED}Unknown command: {command}. Type /help for available commands.")
         return False
 
     def _handle_save(self, name: str) -> None:
+        # When command "/save"
         if not name:
             print(f"{Fore.RED}Usage: /save <name>")
             return
@@ -67,6 +69,10 @@ class CommandHandler:
             print(f'{Fore.GREEN}Saved as "{name.strip()}"')
 
     def _handle_load(self, name: str) -> None:
+
+        # When command "/load"
+        # Load a template by name and set it as the current template in session
+
         if not name:
             print(f"{Fore.RED}Usage: /load <name>")
             return
@@ -114,6 +120,10 @@ class CommandHandler:
             print(f'  [{time_part}] {template} -> "{preview}"')
 
     def _handle_export(self) -> None:
+
+        # When command "/export"
+        # Export logs to JSON or CSV
+
         if not self._log_svc.has_logs():
             print(f"{Fore.YELLOW}No logs to export.")
             return

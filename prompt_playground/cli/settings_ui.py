@@ -8,7 +8,10 @@ from prompt_playground.models import ChatSettings
 
 class SettingsUI:
     def prompt(self, settings: ChatSettings) -> ChatSettings:
-        """Interactively update settings in place and return them."""
+        """
+        when receive command /config
+        Interactively update settings in place and return them.
+        """
         model_key = next((k for k, v in MODELS.items() if v == settings.model), settings.model)
         print(f"{Fore.CYAN}Current settings:")
         print(f"  Model: {model_key} ({settings.model})")

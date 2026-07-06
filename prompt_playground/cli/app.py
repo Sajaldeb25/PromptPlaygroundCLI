@@ -22,9 +22,9 @@ init(autoreset=True)
 
 class PromptPlaygroundApp:
     def __init__(self):
-        load_dotenv(ENV_FILE)
+        load_dotenv(ENV_FILE) # Load environment variables from .env file
 
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = os.getenv("GROQ_API_KEY") # API key from ENV file
         if not api_key:
             print(f"{Fore.RED}Error: GROQ_API_KEY not set. Copy .env.example to .env and add your key.")
             sys.exit(1)
@@ -32,6 +32,9 @@ class PromptPlaygroundApp:
         self.settings = ChatSettings(model=DEFAULT_MODEL)
         self.session = SessionState()
 
+        # Initialize storage and services
+        # It is not directly used by user,
+        # but it is used by services to store and retrieve data
         template_store = TemplateStore(TEMPLATES_FILE)
         log_store = LogStore(LOGS_FILE)
 
@@ -50,10 +53,16 @@ class PromptPlaygroundApp:
         )
 
     def run(self) -> None:
+        """
+        Execute the REPL loop
+        Execute when used PromptPlaygroundApp().run()
+        """
+
         print(f"{Style.BRIGHT}Prompt Playground v1.0")
         print("Type /help for commands\n")
 
         try:
+            # REPL loop, always running until user give /exit command or Ctrl+C
             while True:
                 user_input = input(f"{Fore.CYAN}You: {Style.RESET_ALL}").strip()
                 if not user_input:

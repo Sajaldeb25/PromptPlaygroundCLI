@@ -7,10 +7,12 @@ Type prompts in a chat-style loop, reuse saved templates, and export a full hist
 ## Features
 
 - **Chat loop** — Send prompts and get AI responses with token usage
+- **Streaming** — Optional token-by-token output via `/stream on`
+- **Chain of thought** — Optional `<thinking>` / `<answer>` sections via `/cot on`
 - **Templates** — Save, load, list, and delete named prompts
-- **Logging** — Auto-log every interaction (prompt, response, model, tokens, timestamp)
+- **Logging** — Auto-log every interaction (prompt, full response, parsed CoT fields, model, tokens, timestamp)
 - **Export** — Download history as JSON or CSV
-- **Settings** — Switch models, temperature, max tokens, and system prompt per session
+- **Settings** — Switch models, temperature, max tokens, system prompt, CoT, and streaming per session
 
 ## Requirements
 
@@ -54,6 +56,38 @@ AI: Paris is the capital of France.
    Tokens: 12 | Model: llama-3.3-70b-versatile
 ```
 
+### Chain of thought and streaming
+
+Both features are **off by default** and can be toggled independently:
+
+```
+You: /cot on
+Chain of thought: on
+
+You: /stream on
+Streaming: on
+
+You: What is 15% of 80?
+
+Thinking:
+Let me calculate 15% of 80. 15% = 0.15, so 0.15 × 80 = 12.
+
+Answer:
+15% of 80 is 12.
+   Tokens: 45 | Model: llama-3.3-70b-versatile | CoT: on | Stream: on
+```
+
+| Command | Description |
+|---------|-------------|
+| `/cot` | Toggle chain-of-thought mode |
+| `/cot on` / `/cot off` | Enable or disable CoT explicitly |
+| `/stream` | Toggle streaming output |
+| `/stream on` / `/stream off` | Enable or disable streaming explicitly |
+
+With CoT enabled, the app injects a system prompt that asks the model to respond using `<thinking>` and `<answer>` XML tags. Thinking is shown in cyan; the final answer in green. If the model omits tags, the full response is shown with a warning.
+
+With streaming enabled, tokens print as they arrive instead of waiting for the full response.
+
 ### Save and reuse prompts
 
 ```
@@ -87,6 +121,8 @@ You will be prompted to update:
 | Temperature | Float between `0.0` and `2.0` |
 | Max tokens | Positive integer |
 | System prompt | Any text, or `clear` to remove |
+| Chain of thought | `on` or `off` |
+| Streaming | `on` or `off` |
 
 Press **Enter** on any prompt to keep the current value.
 
@@ -121,7 +157,9 @@ Or press **Ctrl+C** at any time.
 | `/delete <name>` | Delete a template |
 | `/history` | Show the 10 most recent interactions |
 | `/export` | Export all logs to JSON or CSV |
-| `/config` | Change model, temperature, max tokens, system prompt |
+| `/config` | Change model, temperature, tokens, system prompt, CoT, streaming |
+| `/cot [on\|off]` | Toggle chain-of-thought mode |
+| `/stream [on\|off]` | Toggle streaming output |
 | `/help` | Show available commands |
 | `/exit` | Exit the playground |
 
@@ -163,13 +201,17 @@ All data is stored at the **project root** (next to `playground.py`), regardless
   "template": "geography_question",
   "user": "What is the capital of France?",
   "response": "Paris is the capital of France.",
+  "thinking": null,
+  "answer": null,
   "model": "llama-3.3-70b-versatile",
   "tokens": 12,
-  "temperature": 0.7
+  "temperature": 0.7,
+  "cot_enabled": false,
+  "stream_enabled": false
 }
 ```
 
-`template` is `null` when no template was loaded for that interaction.
+`response` always stores the **full raw** AI text (including XML tags when CoT is used). `thinking` and `answer` are populated when CoT tags are present. `template` is `null` when no template was loaded for that interaction.
 
 ## Project Structure
 
@@ -181,13 +223,14 @@ PromptPlaygroundCLI/
 │   ├── models.py              # ChatSettings, SessionState
 │   ├── storage/               # TemplateStore, LogStore (JSON I/O)
 │   ├── services/              # ChatService, TemplateService, LogService
-│   └── cli/                   # PromptPlaygroundApp, CommandHandler, SettingsUI
+│   └── cli/                   # App, commands, settings UI, CotParser, StreamRenderer
 ├── templates.json             # Auto-created on first /save
 ├── logs.json                  # Auto-created on first chat
 ├── requirements.txt
 ├── .env.example
 ├── README.md                  # This file — usage guide
 ├── ARCHITECTURE.md            # Technical architecture reference
+├── COT_AND_STREAMING_PLAN.md  # CoT + streaming feature plan
 └── Plan.md                    # Original implementation plan
 ```
 

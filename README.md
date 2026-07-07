@@ -47,6 +47,8 @@ The app starts directly in a **slash-command chat loop**. Type a normal message 
 
 ### Basic chat
 
+Default mode uses **blocking** output (full response printed at once). CoT and streaming are both off.
+
 ```
 Prompt Playground v1.0
 Type /help for commands
@@ -56,7 +58,40 @@ AI: Paris is the capital of France.
    Tokens: 12 | Model: llama-3.3-70b-versatile
 ```
 
-### Chain of thought and streaming
+### Streaming only
+
+Enable incremental token output without CoT:
+
+```
+You: /stream on
+Streaming: on
+
+You: What is the capital of France?
+AI: Paris is the capital of France.
+   Tokens: 12 | Model: llama-3.3-70b-versatile | Stream: on
+```
+
+With streaming on, text appears token-by-token after the green `AI:` prefix instead of waiting for the full reply.
+
+### Chain of thought only
+
+Enable structured reasoning sections without streaming (blocking display):
+
+```
+You: /cot on
+Chain of thought: on
+
+You: What is 15% of 80?
+
+Thinking:
+To find 15% of 80, multiply 80 by 0.15: 80 × 0.15 = 12.
+
+Answer:
+12
+   Tokens: 187 | Model: llama-3.3-70b-versatile | CoT: on
+```
+
+### Chain of thought and streaming together
 
 Both features are **off by default** and can be toggled independently:
 
@@ -86,7 +121,12 @@ Answer:
 
 With CoT enabled, the app injects a system prompt that asks the model to respond using `<thinking>` and `<answer>` XML tags. Thinking is shown in cyan; the final answer in green. If the model omits tags, the full response is shown with a warning.
 
-With streaming enabled, tokens print as they arrive instead of waiting for the full response.
+With streaming enabled, tokens print as they arrive instead of waiting for the full response. CoT sections also stream incrementally when both features are on.
+
+**Notes:**
+- `/cot` and `/stream` can be combined or used alone.
+- Settings apply for the current session only (not saved between restarts).
+- Press **Ctrl+C** during a stream to cancel; partial responses are not logged.
 
 ### Save and reuse prompts
 
@@ -132,7 +172,12 @@ Press **Enter** on any prompt to keep the current value.
 You: /history
 Recent interactions:
   [13:45] — -> "Paris is the capital of France."
+  [14:20] — -> "12"
+```
 
+For CoT responses, `/history` shows the parsed **answer** when available; otherwise it shows the full response.
+
+```
 You: /export
 Export format (json/csv) [json]: csv
 Logs exported to logs_2026-07-04.csv
@@ -213,6 +258,26 @@ All data is stored at the **project root** (next to `playground.py`), regardless
 
 `response` always stores the **full raw** AI text (including XML tags when CoT is used). `thinking` and `answer` are populated when CoT tags are present. `template` is `null` when no template was loaded for that interaction.
 
+CoT example entry:
+
+```json
+{
+  "timestamp": "2026-07-04 14:20:00",
+  "template": null,
+  "user": "What is 15% of 80?",
+  "response": "<thinking>80 × 0.15 = 12</thinking><answer>12</answer>",
+  "thinking": "80 × 0.15 = 12",
+  "answer": "12",
+  "model": "llama-3.3-70b-versatile",
+  "tokens": 187,
+  "temperature": 0.7,
+  "cot_enabled": true,
+  "stream_enabled": false
+}
+```
+
+CSV exports include all fields listed above.
+
 ## Project Structure
 
 ```
@@ -243,13 +308,14 @@ The app uses a **layered package** design:
 | Layer | Location | Role |
 |-------|----------|------|
 | Entry | `playground.py` | Thin launcher |
-| CLI | `prompt_playground/cli/` | REPL, slash commands, terminal I/O |
-| Services | `prompt_playground/services/` | Business logic, Groq adapter |
+| CLI | `prompt_playground/cli/` | REPL, slash commands, `CotParser`, `StreamRenderer` |
+| Services | `prompt_playground/services/` | Business logic, Groq adapter (`send` / `send_stream`) |
 | Storage | `prompt_playground/storage/` | JSON file repositories |
 | Config | `prompt_playground/config.py`, `models.py` | Constants and shared state |
 
 ```
 playground.py → PromptPlaygroundApp → CommandHandler / ChatService
+                                    → StreamRenderer (display)
                                     → TemplateService / LogService
                                     → TemplateStore / LogStore → *.json
 ```
@@ -260,6 +326,8 @@ playground.py → PromptPlaygroundApp → CommandHandler / ChatService
 |---------|----------|
 | `GROQ_API_KEY not set` | Copy `.env.example` to `.env` and add your key |
 | `API error: Invalid API Key` | Check your key at [console.groq.com](https://console.groq.com) |
+| Streaming shows empty `AI:` with `Tokens: 0` | Ensure dependencies are installed (`pip install -r requirements.txt`). Streaming requires a working Groq API connection. |
+| `CoT tags not found in response` | The model ignored the format; try again or switch models via `/config` |
 | `no prompt to save` | Send a chat message before using `/save` |
 | `template not found` | Use `/list` to see available template names |
 | `python: command not found` | Use `python3` instead |

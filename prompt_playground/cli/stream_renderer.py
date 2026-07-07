@@ -28,9 +28,14 @@ class StreamRenderer:
             return "", 0, stream_result.error, False
 
         if cot_enabled:
-            return self._render_stream_cot(deltas, stream_result)
+            full_text, tokens, _, tags_found = self._render_stream_cot(deltas, stream_result)
+        else:
+            full_text, tokens, _, tags_found = self._render_stream_plain(deltas, stream_result)
 
-        return self._render_stream_plain(deltas, stream_result)
+        if stream_result.error:
+            return "", 0, stream_result.error, False
+
+        return full_text, tokens, None, tags_found
 
     def render_blocking(
         self,

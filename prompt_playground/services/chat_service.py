@@ -77,18 +77,20 @@ class ChatService:
                 stream = self._client.chat.completions.create(
                     **self._completion_kwargs(messages),
                     stream=True,
-                    stream_options={"include_usage": True},
                 )
             except Exception as exc:
                 stream_result.error = str(exc)
                 return
 
-            for chunk in stream:
-                if chunk.choices:
-                    content = chunk.choices[0].delta.content
-                    if content:
-                        yield content
-                if chunk.usage and chunk.usage.total_tokens:
-                    stream_result.tokens = chunk.usage.total_tokens
+            try:
+                for chunk in stream:
+                    if chunk.choices:
+                        content = chunk.choices[0].delta.content
+                        if content:
+                            yield content
+                    if chunk.usage and chunk.usage.total_tokens:
+                        stream_result.tokens = chunk.usage.total_tokens
+            except Exception as exc:
+                stream_result.error = str(exc)
 
         return generate(), stream_result

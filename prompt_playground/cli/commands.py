@@ -147,8 +147,8 @@ class CommandHandler:
             ts = entry.get("timestamp", "")
             time_part = ts[11:16] if len(ts) >= 16 else ts
             template = entry.get("template") or "—"
-            response = entry.get("response", "")
-            preview = response if len(response) <= 40 else response[:37] + "..."
+            preview_source = entry.get("answer") or entry.get("response", "")
+            preview = preview_source if len(preview_source) <= 40 else preview_source[:37] + "..."
             print(f'  [{time_part}] {template} -> "{preview}"')
 
     def _handle_export(self) -> None:

@@ -27,15 +27,21 @@ class LogService:
         tokens: int,
         template: str | None,
         settings: ChatSettings,
+        thinking: str | None = None,
+        answer: str | None = None,
     ) -> dict:
         return {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "template": template,
             "user": user,
             "response": response,
+            "thinking": thinking,
+            "answer": answer,
             "model": settings.model,
             "tokens": tokens,
             "temperature": settings.temperature,
+            "cot_enabled": settings.cot_enabled,
+            "stream_enabled": settings.stream_enabled,
         }
 
     def recent(self, limit: int = 10) -> list[dict]:

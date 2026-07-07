@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from groq import Groq
 
 from prompt_playground.cli.commands import CommandHandler
+from prompt_playground.cli.cot_parser import CotParser
 from prompt_playground.cli.settings_ui import SettingsUI
 from prompt_playground.cli.stream_renderer import StreamRenderer
 from prompt_playground.config import DEFAULT_MODEL, ENV_FILE, LOGS_FILE, TEMPLATES_FILE
@@ -123,12 +124,15 @@ class PromptPlaygroundApp:
                 self._print_metadata(tokens)
 
                 self.session.current_prompt = user_input
+                parsed = CotParser.parse_static(response)
                 entry = self.log_svc.build_entry(
                     user=user_input,
                     response=response,
                     tokens=tokens,
                     template=self.session.current_template,
                     settings=self.settings,
+                    thinking=parsed.thinking if parsed.has_tags else None,
+                    answer=parsed.answer if parsed.has_tags else None,
                 )
                 self.log_svc.add(entry)
         except KeyboardInterrupt:

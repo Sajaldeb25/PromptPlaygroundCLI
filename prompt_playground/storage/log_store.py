@@ -10,9 +10,13 @@ LOG_FIELDNAMES = [
     "template",
     "user",
     "response",
+    "thinking",
+    "answer",
     "model",
     "tokens",
     "temperature",
+    "cot_enabled",
+    "stream_enabled",
 ]
 
 
@@ -43,7 +47,7 @@ class LogStore:
 
     def export_csv(self, logs: list[dict], filename: Path) -> Path:
         with open(filename, "w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=LOG_FIELDNAMES)
+            writer = csv.DictWriter(f, fieldnames=LOG_FIELDNAMES, extrasaction="ignore")
             writer.writeheader()
-            writer.writerows(logs)
+            writer.writerows({field: entry.get(field) for field in LOG_FIELDNAMES} for entry in logs)
         return filename

@@ -9,6 +9,7 @@ from groq import Groq
 
 from prompt_playground.cli.commands import CommandHandler
 from prompt_playground.cli.settings_ui import SettingsUI
+from prompt_playground.cli.stream_renderer import StreamRenderer
 from prompt_playground.config import DEFAULT_MODEL, ENV_FILE, LOGS_FILE, TEMPLATES_FILE
 from prompt_playground.models import ChatSettings, SessionState
 from prompt_playground.services.chat_service import ChatService
@@ -43,6 +44,7 @@ class PromptPlaygroundApp:
 
         client = Groq(api_key=api_key)
         self.chat_svc = ChatService(client, self.settings)
+        self.stream_renderer = StreamRenderer()
 
         self.command_handler = CommandHandler(
             template_svc=self.template_svc,
@@ -51,6 +53,41 @@ class PromptPlaygroundApp:
             session=self.session,
             settings_ui=SettingsUI(),
         )
+
+    def _print_metadata(self, tokens: int) -> None:
+        parts = [f"Tokens: {tokens}", f"Model: {self.settings.model}"]
+        if self.settings.cot_enabled:
+            parts.append("CoT: on")
+        if self.settings.stream_enabled:
+            parts.append("Stream: on")
+        print(f"{Fore.YELLOW}   {' | '.join(parts)}")
+
+    def _handle_chat(self, user_input: str) -> tuple[str | None, int, str | None]:
+        """Send a prompt and render the response.
+
+        Returns:
+            (full_text, tokens, error)
+            On API failure full_text is None. On success full_text is the raw
+            response string (including XML tags when CoT is enabled).
+        """
+        if self.settings.stream_enabled:
+            deltas, stream_result = self.chat_svc.send_stream(user_input)
+            full_text, tokens, error, _ = self.stream_renderer.render_stream(
+                deltas,
+                stream_result,
+                cot_enabled=self.settings.cot_enabled,
+            )
+            return full_text, tokens, error
+
+        response, tokens, error = self.chat_svc.send(user_input)
+        if error:
+            return None, 0, error
+
+        full_text, _ = self.stream_renderer.render_blocking(
+            response,
+            cot_enabled=self.settings.cot_enabled,
+        )
+        return full_text, tokens, None
 
     def run(self) -> None:
         """
@@ -73,13 +110,17 @@ class PromptPlaygroundApp:
                         break
                     continue
 
-                response, tokens, error = self.chat_svc.send(user_input)
+                try:
+                    response, tokens, error = self._handle_chat(user_input)
+                except KeyboardInterrupt:
+                    print()
+                    raise
+
                 if error:
                     print(f"{Fore.RED}API error: {error}")
                     continue
 
-                print(f"{Fore.GREEN}AI: {response}")
-                print(f"{Fore.YELLOW}   Tokens: {tokens} | Model: {self.settings.model}")
+                self._print_metadata(tokens)
 
                 self.session.current_prompt = user_input
                 entry = self.log_svc.build_entry(

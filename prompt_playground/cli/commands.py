@@ -46,6 +46,10 @@ class CommandHandler:
             self._handle_export()
         elif command == "/config":
             self._settings_ui.prompt(self._settings)
+        elif command == "/cot":
+            self._handle_cot(arg)
+        elif command == "/stream":
+            self._handle_stream(arg)
         elif command == "/exit":
             print(f"{Fore.GREEN}Goodbye!")
             return True
@@ -53,6 +57,34 @@ class CommandHandler:
             # if wrong command
             print(f"{Fore.RED}Unknown command: {command}. Type /help for available commands.")
         return False
+
+    def _set_toggle(self, arg: str, current: bool) -> bool | None:
+        """Parse on/off/empty toggle arg. Returns new value or None if invalid."""
+        if arg == "on":
+            return True
+        if arg == "off":
+            return False
+        if arg == "":
+            return not current
+        return None
+
+    def _handle_cot(self, arg: str) -> None:
+        new_value = self._set_toggle(arg, self._settings.cot_enabled)
+        if new_value is None:
+            print(f"{Fore.RED}Usage: /cot [on|off]")
+            return
+        self._settings.cot_enabled = new_value
+        state = "on" if new_value else "off"
+        print(f"{Fore.GREEN}Chain of thought: {state}")
+
+    def _handle_stream(self, arg: str) -> None:
+        new_value = self._set_toggle(arg, self._settings.stream_enabled)
+        if new_value is None:
+            print(f"{Fore.RED}Usage: /stream [on|off]")
+            return
+        self._settings.stream_enabled = new_value
+        state = "on" if new_value else "off"
+        print(f"{Fore.GREEN}Streaming: {state}")
 
     def _handle_save(self, name: str) -> None:
         # When command "/save"

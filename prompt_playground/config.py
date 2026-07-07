@@ -36,7 +36,9 @@ Available commands:
   /delete <name>  Delete a template
   /history        Show recent interactions
   /export         Export logs to JSON or CSV
-  /config         Change model, temperature, tokens, system prompt
+  /config         Change model, temperature, tokens, system prompt, CoT, streaming
+  /cot [on|off]   Toggle chain-of-thought mode
+  /stream [on|off]  Toggle streaming output
   /help           Show this help
   /exit           Exit playground
 """

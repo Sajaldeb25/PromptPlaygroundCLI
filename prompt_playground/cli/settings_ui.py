@@ -18,6 +18,8 @@ class SettingsUI:
         print(f"  Temperature: {settings.temperature}")
         print(f"  Max tokens: {settings.max_tokens}")
         print(f"  System prompt: {settings.system_prompt or '(none)'}")
+        print(f"  Chain of thought: {'on' if settings.cot_enabled else 'off'}")
+        print(f"  Streaming: {'on' if settings.stream_enabled else 'off'}")
 
         print(f"\n{Fore.CYAN}Models: 1=mixtral  2=llama2  3=gemma  (or type key name)")
         choice = input("Model [Enter to keep]: ").strip().lower()
@@ -61,5 +63,25 @@ class SettingsUI:
         elif system_input:
             settings.system_prompt = system_input
             print(f"{Fore.GREEN}System prompt updated.")
+
+        cot_input = input("Chain of thought [on/off, Enter to keep]: ").strip().lower()
+        if cot_input == "on":
+            settings.cot_enabled = True
+            print(f"{Fore.GREEN}Chain of thought enabled.")
+        elif cot_input == "off":
+            settings.cot_enabled = False
+            print(f"{Fore.GREEN}Chain of thought disabled.")
+        elif cot_input:
+            print(f"{Fore.RED}Invalid value. Use on or off. Keeping {'on' if settings.cot_enabled else 'off'}.")
+
+        stream_input = input("Streaming [on/off, Enter to keep]: ").strip().lower()
+        if stream_input == "on":
+            settings.stream_enabled = True
+            print(f"{Fore.GREEN}Streaming enabled.")
+        elif stream_input == "off":
+            settings.stream_enabled = False
+            print(f"{Fore.GREEN}Streaming disabled.")
+        elif stream_input:
+            print(f"{Fore.RED}Invalid value. Use on or off. Keeping {'on' if settings.stream_enabled else 'off'}.")
 
         return settings

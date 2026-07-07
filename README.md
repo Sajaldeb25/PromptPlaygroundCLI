@@ -333,6 +333,4 @@ playground.py → PromptPlaygroundApp → CommandHandler / ChatService
 | `python: command not found` | Use `python3` instead |
 | `ModuleNotFoundError: prompt_playground` | Run from project root; ensure `playground.py` is present |
 
-## License
 
-MIT
